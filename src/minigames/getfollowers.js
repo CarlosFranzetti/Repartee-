@@ -317,7 +317,7 @@ async function run(host, p, SK) {
     const cells = [];
     for (let d = 0; d < G.days; d++) { const col = el("div", { cls: "gf-day" }, week); el("span", { text: DAYS[d % 7] }, col); const cs = []; for (let s = 0; s < 3; s++) cs.push(el("div", { cls: "gf-cell", text: "" }, col)); cells.push({ col, cs }); }
     const panel = el("div", {}, side);
-    const logEl = el("div", { cls: "gf-log" }, wrap);
+    const logEl = el("div", { cls: "gf-log" }, grid);
     el("div", { cls: "sk-tip", text: "Keys 1-6 pick an activity · each day: morning, afternoon, night" }, wrap);
     // ---------- phone
     const c = cvApi.c, W = cvApi.w, H = cvApi.h;

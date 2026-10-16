@@ -6196,7 +6196,7 @@ function save() {
   store.set(SAVE_KEY, S);
 }
 RP.save = save;
-RP.hasSave = () => !!store.get(SAVE_KEY);
+RP.hasSave = () => { const d = store.get(SAVE_KEY); return !!(d && ROOMS[d.room]); };   // a save from a level this build lacks does not count
 RP.loadSave = async function () {
   const d = store.get(SAVE_KEY);
   if (!d || !ROOMS[d.room]) return false;
@@ -7406,6 +7406,13 @@ const CSS = `
 .ap-back { align-self: flex-start; }
 .ap-msg { min-height: 2.2em; }
 .ap-legend { font-size: 16px; color: var(--muted); line-height: 1.05; }
+.ap-main.compact { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "hud phone" "stage phone" "plan phone" "msg phone" "acts phone"; grid-template-rows: auto auto auto auto 1fr; gap: 4px 8px; }
+.ap-main.compact .ap-stage { margin: 0; justify-self: start; }
+.ap-main.compact .ap-hud { gap: 4px; flex-wrap: nowrap; } .ap-main.compact .ap-chip { padding: 1px 5px; font-size: 16px; gap: 3px; white-space: nowrap; } .ap-main.compact .ap-chip small { display: none; } .ap-main.compact .ap-bat { width: 22px; height: 9px; }
+.ap-main.compact .ap-plan { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; } .ap-main.compact .ap-slot { display: block; padding: 2px 5px; } .ap-main.compact .ap-slot b { width: auto; font-size: 13px; display: flex; } .ap-main.compact .ap-slot span { font-size: 15px; line-height: 1; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ap-main.compact .ap-slot small { display: none; }
+.ap-main.compact .ap-msg { min-height: 0; font-size: 15px; line-height: 1; overflow: hidden; max-height: 2em; }
+.ap-main.compact .ap-phone { padding: 4px 6px 6px; border-radius: 14px; max-width: 440px; justify-self: start; width: 100%; gap: 3px; } .ap-main.compact .ap-phone::before { display: none; } .ap-main.compact .ap-status { font-size: 15px; }
+.ap-main.compact .ap-screen { height: auto; flex: 1 1 0; min-height: 0; max-height: none; padding: 5px; gap: 4px; } .ap-main.compact .ap-row { min-height: 32px; } .ap-main.compact .ap-bubble { font-size: 18px; padding: 4px 7px; } .ap-main.compact .ap-opt { font-size: 18px; padding: 4px 8px; } .ap-main.compact .ap-who canvas { width: 40px; height: 40px; } .ap-main.compact .ap-who { grid-template-columns: 40px minmax(0, 1fr); } .ap-main.compact .ap-legend { display: none; }
 @media (max-width: 860px) { .ap-plan { grid-template-columns: 1fr; gap: 4px; } .ap-slot { flex-direction: row; justify-content: space-between; align-items: center; gap: 8px; } .ap-slot b { flex: none; width: 70px; } .ap-slot span { flex: 1; } .ap-slot small { display: none; } .ap-screen { max-height: none; } }
 @media (prefers-reduced-motion: reduce) { .ap-scene { } }
 `;
@@ -8129,9 +8136,15 @@ RP.mg.register("afterParty", {
       resolveFn = resolve;
       NK.onResize(host, layout);
       function layout() {
-        const avail = root.clientWidth || 700, wide = avail >= 940;
-        main.classList.toggle("wide", wide);
-        NK.fit(scene.cv, { clientWidth: wide ? 640 : avail }, W, H, wide ? 640 : 720);
+        const compact = NK.isCompact();
+        NK.setCompact(host, compact);
+        const avail = root.clientWidth || 700, wide = !compact && avail >= 940;
+        main.classList.toggle("wide", wide); main.classList.toggle("compact", compact);
+        if (compact) {
+          const w = Math.max(280, Math.min(avail * 0.5, (window.innerHeight - 172) * (W / H)));
+          main.style.gridTemplateColumns = Math.round(w) + "px minmax(0, 1fr)"; scene.cv.style.width = Math.round(w) + "px"; scene.cv.style.height = Math.round(w * H / W) + "px";
+          phone.style.height = Math.max(200, window.innerHeight - 22) + "px";
+        } else { phone.style.height = ""; main.style.gridTemplateColumns = ""; NK.fit(scene.cv, { clientWidth: wide ? 640 : avail }, W, H, wide ? 640 : 720); }
       }
       layout(); updateHud(); showHome();
       setMsg("It's 4:10 AM and the party is dead. You need people, a place and a sound system before sunrise. Start with Twinkie.");
@@ -9236,6 +9249,12 @@ const CSS = `
 .cd-hud .sk-meter { flex: 1 1 0; min-width: 0; }
 .cd-round { align-self: center; font-family: var(--logo); font-size: 10px; letter-spacing: .06em; color: var(--amber); background: #0c0919; padding: 6px 10px; border: 1px solid #2d2456; text-align: center; white-space: nowrap; }
 @media (max-width: 559px) { .cd-round { display: none; } }
+.cd-play { display: flex; flex-direction: column; gap: 10px; }
+@media (max-height: 460px) and (min-width: 560px) {
+  .cd-play { display: grid; grid-template-columns: 330px minmax(0, 1fr); grid-template-areas: "cw say" "cw choices"; gap: 5px 10px; align-items: start; }
+  .cd-play > .cd-wrap { grid-area: cw; } .cd-play > .sk-say { grid-area: say; } .cd-play > .cd-choices { grid-area: choices; } .cd-round { display: none; }
+  .cd-hud { margin-bottom: 4px; }
+}
 .cd-vs { font-size: 17px; color: var(--muted); letter-spacing: .08em; }
 .cd-end { font-size: 22px; line-height: 1.1; }
 .cd-flow .sk-say { min-height: 68px; padding-top: 6px; padding-bottom: 8px; } .cd-flow .sk-choice { padding-top: 4px; padding-bottom: 4px; min-height: 34px; font-size: 21px; } .cd-flow .sk-choices { gap: 4px; }
@@ -9659,6 +9678,7 @@ async function run(host, p, SK) {
   if (!cssDone) { el("style", { text: CSS }, document.head); cssDone = true; }
   SK.css();
   const S = SK.session(host), root = host.root;
+  try { host.ov.classList.add("sk-g"); } catch (e) { /* ignore */ }
   const diff = clamp(Math.round(p.difficulty || 2), 1, 5);
   const rnd = Math.random;
   const keys = Object.keys(SC);
@@ -9702,15 +9722,16 @@ async function run(host, p, SK) {
       pill: "DIFFICULTY " + diff,
       button: "START"
     });
-    const cw = el("div", { cls: "cd-wrap" }, wrap);
+    const play = el("div", { cls: "cd-play" }, wrap);
+    const cw = el("div", { cls: "cd-wrap" }, play);
     const hud = el("div", { cls: "cd-hud" }, cw);
     const mRep = SK.meter(hud, { label: "REPUTATION", color: "#ff3fa4", max: 100, value: 50 });
     const roundEl = el("div", { cls: "cd-round", text: "BEAT 1/3" }, hud);
     const mVibe = SK.meter(hud, { label: "VIBE", color: "#39d0ff", max: 100, value: 50 });
     const stageApi = SK.canvas(cw, 320, 188, 2);
-    const say = SK.say(S, wrap);
-    const chBox = el("div", {}, wrap);
-    el("div", { cls: "sk-tip", text: "Keys 1-4 pick a response · click or Space skips the typing" }, wrap);
+    const say = SK.say(S, play);
+    const chBox = el("div", { cls: "cd-choices" }, play);
+    el("div", { cls: "sk-tip", text: "Keys 1-4 pick a response · click or Space skips the typing" }, play);
     const c = stageApi.c;
     const scene = paintScene(sc.scene, SK, hashStr(scnKey) % 9999);
     const floats = SK.floats();
@@ -9792,7 +9813,7 @@ async function run(host, p, SK) {
     const score = clamp(Math.round((sum - bias - 78) * 1.6), 0, 100);
     const ok = outcome !== "lose";
     await S.wait(250);
-    cw.style.display = "none"; say.box.style.display = "none"; wrap.querySelectorAll(".sk-tip").forEach(n => { n.style.display = "none"; });
+    play.style.display = "none";
     const stamp = { w: 64, h: 24, k: 4, draw(g) { const col = outcome === "lose" ? "#ff6a6a" : outcome === "draw" ? "#ffc44d" : "#9be15d", w = outcome === "legend" ? "LEGEND" : outcome === "win" ? "YOU WIN" : outcome === "draw" ? "DRAW" : "OUCH"; R(g, 0, 0, 64, 24, "#0a0716"); R(g, 1, 1, 62, 22, col); R(g, 3, 3, 58, 18, "#0a0716"); txtC(g, w, 32, 8, col, 2, 2); } };
     await SK.endCard(S, wrap, { kicker: sc.title.toUpperCase(), title: end.title, lines: [tok(end.lines[end.lines.length - 1][1])], stats: [["REPUTATION", st.rep, st.rep >= 60 ? "ok" : st.rep < 40 ? "bad" : ""], ["VIBE", st.vibe, st.vibe >= 60 ? "ok" : st.vibe < 40 ? "bad" : ""]], score, ok, stamp, rank: outcome === "legend" ? "LEGEND" : outcome === "win" ? "SMOOTH" : outcome === "draw" ? "SURVIVED" : "BURNED" });
     return { ok, score, outcome, ending: outcome, scenario: scnKey, rep: st.rep, vibe: st.vibe, title: end.title };
@@ -10451,6 +10472,25 @@ const CSS = `
   .cr-scene { order: 1; } .cr-now { order: 2; } .cr-gauge { order: 3; } .cr-chips { order: 4; } .cr-msg { order: 5; } .cr-say { order: 6; } .cr-tell { order: 7; }
   .cr-hand { order: 8; } .cr-act { order: 9; } .cr-hist { order: 10; }
 }
+
+@media (max-height: 460px) {
+  .overlay.mg-crowdRead { padding: 4px 8px; }
+  .mg-crowdRead .mg-wrap { gap: 4px; }
+  .mg-crowdRead .mg-head { flex-wrap: nowrap; align-items: baseline; }
+  .mg-crowdRead .mg-logo { font-size: 13px; } .mg-crowdRead .mg-sub { font-size: 15px; }
+  .cr-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 36%); gap: 8px; align-items: start; }
+  .cr-left, .cr-side { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .cr-scene, .cr-now, .cr-gauge, .cr-chips, .cr-msg, .cr-say, .cr-tell, .cr-hand, .cr-act, .cr-hist { order: 0; }
+  .cr-now, .cr-say, canvas.cr-hist { display: none; }
+  .cr-msg { font-size: 17px; min-height: 0; line-height: 1.05; max-height: 2.2em; overflow: hidden; }
+  .cr-gauge .lab { font-size: 15px; } .cr-bar { height: 12px; }
+  .cr-chips .sk-chip { font-size: 14px; padding: 0 5px; }
+  .cr-tell { padding: 0; border: 0; background: none; min-height: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cr-tell > :not(:first-child) { display: none; }
+  .cr-hand { max-height: calc(100vh - 76px); overflow-y: auto; gap: 3px; padding-right: 2px; }
+  .cr-hand .sk-card { padding: 2px 5px 2px 3px; }
+  .cr-act .btn { padding: 4px 12px; font-size: 19px; }
+}
 `;
 let cssDone = false;
 
@@ -10511,7 +10551,7 @@ RP.mg.register("crowdRead", {
       const W = 320, H = 144;
       const cv = el("canvas", { cls: "sk-cv px", width: W, height: H, role: "img", "aria-label": "The dance floor, seen from the DJ booth" }, sceneWrap);
       const sc = cv.getContext("2d");
-      kit.fit(host, cv, W, H, sceneWrap);
+      kit.fit(host, cv, W, H, sceneWrap, 0, 190);
 
       /* ----- under the scene ----- */
       const now = el("div", { cls: "cr-now" }, left);
@@ -10562,7 +10602,7 @@ RP.mg.register("crowdRead", {
         hand.innerHTML = ""; cards = [];
         const ranked = R.ids.map(id => RP.rec(id));
         ranked.forEach((rec, i) => {
-          const b = kit.card(host, rec, { key: String(i + 1) });
+          const b = kit.card(host, rec, { key: String(i + 1), compact: true });
           b.setAttribute("role", "option"); b.setAttribute("aria-selected", "false");
           b.addEventListener("click", () => { if (phase !== "pick" || S.used.has(rec.id)) return; if (sel === rec.id) doPlay(); else select(rec.id); });
           hand.appendChild(b); cards.push({ rec, b, jump: el("span", { cls: "jmp" }, b.t3) });
@@ -12087,7 +12127,8 @@ const { el, clamp, R, P, ell, line, poly, mulberry, hashStr, ramp, txt, txtC, tx
 const K = ramp;
 
 const CSS = `
-.gf-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; }
+.gf-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "stage side" "log log"; gap: 12px; align-items: start; }
+.gf-grid > .sk-stage { grid-area: stage; } .gf-grid > .gf-side { grid-area: side; } .gf-grid > .gf-log { grid-area: log; }
 .gf-grid .sk-stage { margin: 0; }
 .gf-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .gf-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -12113,7 +12154,13 @@ const CSS = `
 .gf-ev h3 { margin: 0; font-family: var(--logo); font-weight: 400; font-size: 12px; letter-spacing: .04em; color: var(--amber); line-height: 1.5; }
 .gf-ev p { margin: 0; font-size: 21px; line-height: 1.06; }
 .gf-log { min-height: 1.2em; font-size: 21px; color: #ff8fcf; line-height: 1.05; }
-@media (max-width: 959px) { .gf-grid { grid-template-columns: minmax(0, 1fr); } .gf-grid .sk-stage { margin: 0 auto; } }
+@media (max-width: 959px) { .gf-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "side" "log"; } .gf-grid .sk-stage { margin: 0 auto; } }
+@media (max-height: 460px) and (min-width: 560px) {
+  .gf-grid { grid-template-columns: 330px minmax(0, 1fr); grid-template-areas: "stage side" "log side"; gap: 6px 10px; } .gf-grid .sk-stage { margin: 0; }
+  .gf-side { gap: 5px; } .gf-status { font-size: 18px; } .gf-day { padding: 2px; font-size: 13px; gap: 2px; } .gf-cell { height: 14px; font-size: 14px; }
+  .gf-act { min-height: 38px; font-size: 20px; padding: 3px 8px; } .gf-act small { font-size: 13px; margin-top: 1px; }
+  .gf-ev { padding: 5px 8px; gap: 4px; } .gf-ev h3 { font-size: 10px; } .gf-ev p { font-size: 19px; } .gf-log { font-size: 19px; }
+}
 @media (max-width: 559px) { .gf-act { font-size: 21px; padding: 5px 6px; } .gf-act small { font-size: 14px; } .gf-day { font-size: 13px; } }
 `;
 let cssDone = false;
@@ -12345,6 +12392,7 @@ async function run(host, p, SK) {
   if (!cssDone) { el("style", { text: CSS }, document.head); cssDone = true; }
   SK.css();
   const S = SK.session(host), root = host.root;
+  try { host.ov.classList.add("sk-g"); } catch (e) { /* ignore */ }
   const G = newGame(p);
   const rnd = Math.random;
   const name = SK.djName();
@@ -12372,7 +12420,7 @@ async function run(host, p, SK) {
     });
     const wide = (document.documentElement.clientWidth || 800) >= 960;
     const grid = el("div", { cls: "gf-grid" }, wrap);
-    const cvApi = wide ? SK.canvas(grid, 120, 176, 2) : SK.canvas(grid, 160, 76, 2);
+    const cvApi = wide ? SK.canvas(grid, 120, 176, 2) : SK.canvas(grid, 160, 76, 2, 2);
     cvApi.noSide = true; cvApi.fit();
     const side = el("div", { cls: "gf-side" }, grid);
     const stats = el("div", { cls: "gf-stats" }, side);
@@ -12384,7 +12432,7 @@ async function run(host, p, SK) {
     const cells = [];
     for (let d = 0; d < G.days; d++) { const col = el("div", { cls: "gf-day" }, week); el("span", { text: DAYS[d % 7] }, col); const cs = []; for (let s = 0; s < 3; s++) cs.push(el("div", { cls: "gf-cell", text: "" }, col)); cells.push({ col, cs }); }
     const panel = el("div", {}, side);
-    const logEl = el("div", { cls: "gf-log" }, wrap);
+    const logEl = el("div", { cls: "gf-log" }, grid);
     el("div", { cls: "sk-tip", text: "Keys 1-6 pick an activity · each day: morning, afternoon, night" }, wrap);
     // ---------- phone
     const c = cvApi.c, W = cvApi.w, H = cvApi.h;
@@ -12478,7 +12526,7 @@ async function run(host, p, SK) {
     panel.textContent = "";
     await S.wait(600);
     const gained = G.F - G.start, ok = G.F >= G.goal, sc = score(G);
-    grid.style.display = "none"; logEl.style.display = "none"; wrap.querySelectorAll(".sk-tip").forEach(n => { n.style.display = "none"; });
+    grid.style.display = "none"; wrap.querySelectorAll(".sk-tip").forEach(n => { n.style.display = "none"; });
     const burned = G.E < 15;
     const title = ok ? (G.F >= G.goal * 1.3 ? "You blew up (a little)" : "Goal reached") : burned ? "Burned out" : "So close";
     const lines = [ok ? "You made it to " + fmtNum(G.F) + " followers. Lou asks what a follower is. You explain. He says, \"So, a regular.\"" : "You ended the week at " + fmtNum(G.F) + ". The goal was " + fmtNum(G.goal) + ". The algorithm sends its regards."];
@@ -13228,6 +13276,16 @@ const CSS = `
 .gl-go.yes { border-color: #2a6a46; color: var(--ok); } .gl-go.yes:hover:not(:disabled) { background: #123020; border-color: var(--ok); color: var(--ok); }
 .gl-go.no { border-color: #6a2a3a; color: #ff8a8a; } .gl-go.no:hover:not(:disabled) { background: #301018; border-color: #ff6a6a; color: #ff8a8a; }
 @media (max-width: 559px) { .gl-row { padding: 4px; min-height: 56px; } .gl-layout { gap: 6px; } .gl-layout .sk-say { min-height: 70px; padding: 6px 10px 8px; } .gl-layout .sk-say .tx { font-size: 21px; } .gl-acts { position: sticky; bottom: 6px; z-index: 4; background: rgba(5, 3, 10, .94); padding: 6px; border: 1px solid var(--line); grid-template-columns: 1fr 1fr; } .gl-step { grid-column: 1 / -1; justify-content: center; } .gl-row { grid-template-columns: 84px minmax(0, 1fr); } .gl-row canvas { width: 80px; height: 50px; } }
+@media (max-height: 460px) and (min-width: 560px) {
+  .sk-g .gl-layout { grid-template-columns: 330px minmax(0, 1fr); grid-template-areas: "stage side" "say side" "acts side"; gap: 6px 10px; }
+  .sk-g .gl-layout > .sk-side { display: flex; grid-area: side; gap: 5px; }
+  .sk-g .gl-layout .gl-meters, .sk-g .gl-layout .gl-case, .sk-g .gl-layout .gl-clip { grid-area: auto; }
+  .sk-g .gl-row { grid-template-columns: 84px minmax(0, 1fr); padding: 3px 5px; min-height: 52px; } .sk-g .gl-row canvas { width: 80px; height: 50px; } .sk-g .gl-row .what { font-size: 17px; }
+  .sk-g .gl-clip { font-size: 16px; padding: 3px 8px 4px; border-top-width: 8px; } .sk-g .gl-clip h3 { margin: 0; cursor: pointer; font-size: 15px; }
+  .sk-g .gl-acts { position: static; background: none; padding: 0; border: 0; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); } .sk-g .gl-acts .gl-go { font-size: 21px !important; padding: 6px 4px !important; }
+  .sk-g .gl-step { padding: 1px 4px; } .sk-g .gl-step b { font-size: 20px; min-width: 52px; }
+}
+.gl-clip h3 { cursor: pointer; } .gl-clip.closed ul { display: none; } .gl-clip.closed h3::after { content: " [+]"; } .gl-clip:not(.closed) h3::after { content: " [-]"; }
 `;
 let cssDone = false;
 
@@ -13238,7 +13296,7 @@ const VIP_DEFAULT = ["Kosmo Delacroix", "Twinkie", "Axl Vanta"];
 const VIP_CHAR = { kosmo: "kosmo", twinkie: "twinkie", axl: "axl", dante: "dante", eddie: "eddie", lou: "lou", ray: "ray", jess: "jess" };
 
 const CLAIMS = {
-  listed: ["Hi. {first} {last}. I'm on the list.", "{last}. {first} {last}. Should be on there.", "Name's {last}. Be gentle, I've been standing here since the Obama administration.", "{first} {last}. Yes, with the two Ns."],
+  listed: ["Hi. {first} {last}. I'm on the list.", "{last}. {first} {last}. Should be on there.", "Name's {last}. Be gentle, I've been standing here since the first snow.", "{first} {last}. Yes, with the two Ns."],
   listedPlus: ["{first} {last}, plus {n}. We're all very normal.", "{last}, plus {n}. They're quiet. Mostly.", "It's {last} plus {n}. The {n} are my cousins. They're fine."],
   overplus: ["{first} {last}, plus {n}. That's what I was told.", "It's {last}, plus {n}. A guy said plus {n}. A confident guy."],
   stranger: ["I'm with the DJ.", "I know {dj}. Personally. From the thing.", "I'm on the list. Under... something. Check under 'cool'.", "The bartender said it's fine.", "Do I look like I need to be on a list?", "My cousin knows the guy who knows Dante. I'm basically on the list.", "I'm a friend of a friend of {dj}. Who? The friend. Of the friend.", "I'm with the DJ. The other DJ. The DJ's DJ."],
@@ -13458,6 +13516,7 @@ async function run(host, p, SK) {
   if (!cssDone) { el("style", { text: CSS }, document.head); cssDone = true; }
   SK.css();
   const S = SK.session(host), root = host.root;
+  try { host.ov.classList.add("sk-g"); } catch (e) { /* ignore */ }
   const diff = clamp(Math.round(p.difficulty || 2), 1, 5);
   const rnd = Math.random;
   const G = makeCrowd(p, diff, rnd, SK);
@@ -13494,7 +13553,9 @@ async function run(host, p, SK) {
     const mAng = SK.meter(hud, { label: "ANGRY", color: "#ff3fa4", max: 10, value: 0 }); mAng.set(0, "0/10");
     // clipboard
     const clip = el("div", { cls: "gl-clip" }, side);
-    el("h3", { text: "CLIPBOARD — " + venue.toUpperCase() }, clip);
+    const clipH = el("h3", { text: "CLIPBOARD \u2014 " + venue.toUpperCase() }, clip);
+    clipH.addEventListener("click", () => clip.classList.toggle("closed"));
+    if ((window.innerHeight || 800) < 460) clip.classList.add("closed");
     const cul = el("ul", {}, clip);
     el("li", { html: "Capacity <b>" + cap + "</b>. List: <b>" + list.length + "</b> names." }, cul);
     el("li", { html: "VIPs: <b>" + G.vipNames.slice(0, Math.max(1, G.vipCount)).join(", ") + "</b>. Gold band. No ID needed." }, cul);
@@ -13811,6 +13872,9 @@ const CSS = `
 .lt-alerts { display: flex; flex-direction: column; gap: 4px; font-size: 17px; line-height: 1.07; color: #ffc9e6; }
 .lt-alerts div { border-left: 3px solid var(--pink); padding-left: 6px; }
 .lt-gear { display: flex; align-items: center; gap: 6px; font-size: 18px; color: var(--fg); }
+.lt-main.compact { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "hud panel" "map panel" "info panel" "acts panel"; grid-template-rows: auto auto auto 1fr; gap: 4px 8px; }
+.lt-main.compact .lt-mapbox { margin: 0; } .lt-main.compact .lt-hud { gap: 3px; flex-wrap: wrap; } .lt-main.compact .lt-chip { padding: 1px 5px; font-size: 16px; gap: 3px; white-space: nowrap; } .lt-main.compact .lt-chip small { font-size: 12px; } .lt-main.compact .lt-chip.due small:last-child { display: none; } .lt-main.compact .lt-bar { width: 24px; height: 8px; }
+.lt-main.compact .lt-info { font-size: 16px; min-height: 0; line-height: 1.02; } .lt-main.compact .lt-panel { overflow-y: auto; gap: 4px; padding-right: 2px; } .lt-main.compact .lt-card { padding: 5px 7px; gap: 4px; } .lt-main.compact .lt-card h3 { font-size: 17px; } .lt-main.compact .lt-card p { display: none; } .lt-main.compact .lt-phonecard p { display: block; font-size: 15px; } .lt-main.compact .lt-opt .c { font-size: 13px; } .lt-main.compact .lt-opt { padding: 3px 7px; font-size: 18px; } .lt-main.compact .lt-opt.mv { padding: 2px 6px; } .lt-main.compact .lt-row2 { grid-template-columns: 1fr 1fr; gap: 4px; } .lt-main.compact .lt-ann { font-size: 17px; padding: 4px 8px; } .lt-main.compact .lt-log { display: none; } .lt-main.compact .lt-phonecard { flex-direction: row; flex-wrap: wrap; align-items: center; } .lt-main.compact .lt-phonecard .lt-opt { width: auto; flex: 1 1 130px; } .lt-main.compact .lt-phonecard p, .lt-main.compact .lt-phonecard .lt-alerts { flex: 1 1 100%; } .lt-main.compact .lt-phonecard h3 { flex: 1 1 100%; } .lt-main.compact .lt-lab { }
 @media (max-width: 860px) { .lt-info { font-size: 18px; } .lt-opt { font-size: 19px; } }
 @media (prefers-reduced-motion: reduce) { .lt-map { } }
 `;
@@ -14349,7 +14413,7 @@ RP.mg.register("lastTrain", {
         optBtn(c, ending ? "Get off (the train is done)" : "Get off here", "", getOff);
       }
       /* phone */
-      const pc = el("div", { cls: "lt-card" }, panel);
+      const pc = el("div", { cls: "lt-card lt-phonecard" }, panel);
       el("h3", { html: "<span>PHONE</span><small>" + Math.round(Pl.bat) + "%</small>" }, pc);
       if (Pl.liveUntil >= 0) {
         el("p", { text: "Live until " + clk(Pl.liveUntil) + ". Train positions are on the map. Alerts:" }, pc);
@@ -14448,9 +14512,16 @@ RP.mg.register("lastTrain", {
       resolveFn = resolve;
       NK.onResize(host, layout);
       function layout() {
-        const avail = root.clientWidth || 700, wide = avail >= 940;
-        main.classList.toggle("wide", wide);
-        const sc = NK.fit(map.cv, { clientWidth: wide ? 640 : avail }, W, H, wide ? 640 : 760);
+        const compact = NK.isCompact();
+        NK.setCompact(host, compact);
+        const avail = root.clientWidth || 700, wide = !compact && avail >= 940;
+        main.classList.toggle("wide", wide); main.classList.toggle("compact", compact);
+        let sc;
+        if (compact) {
+          const w = Math.max(280, Math.min(avail * 0.52, (window.innerHeight - 150) * (W / H)));
+          sc = w / W; main.style.gridTemplateColumns = Math.round(w) + "px minmax(0, 1fr)"; map.cv.style.width = Math.round(w) + "px"; map.cv.style.height = Math.round(H * sc) + "px";
+          panel.style.maxHeight = Math.max(160, window.innerHeight - 52) + "px";
+        } else { panel.style.maxHeight = ""; main.style.gridTemplateColumns = ""; sc = NK.fit(map.cv, { clientWidth: wide ? 640 : avail }, W, H, wide ? 640 : 760); }
         placeLabels(sc);
       }
       layout();
@@ -15582,6 +15653,22 @@ NK.css = (id, text) => {
 NK.pick = (a, rnd) => a[Math.floor((rnd || Math.random)() * a.length)];
 NK.shuffle = (a, rnd) => { const r = rnd || Math.random, b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
 
+/* landscape phones: short viewport, so the games switch to a compact side-by-side layout */
+NK.CSS_COMPACT = `
+.nk-compact { gap: 4px !important; }
+.nk-compact .mg-head { gap: 6px; align-items: baseline; flex-wrap: nowrap; justify-content: space-between; }
+.nk-compact .mg-logo { font-size: 14px; } .nk-compact .mg-sub { font-size: 15px; }
+.nk-compact .mg-msg { font-size: 17px; } .nk-compact .mg-say { font-size: 15px; }
+.nk-compact .btn { font-size: 18px; padding: 3px 12px; }
+.nk-compact .nk-end { gap: 4px; padding: 8px 10px; } .nk-compact .nk-end h2 { font-size: 14px; } .nk-compact .nk-end .nk-kick { font-size: 15px; }
+.nk-compact .nk-end .nk-stamp { width: 144px; height: 60px; } .nk-compact .nk-end .nk-score { display: none; }
+.nk-compact .nk-end .nk-blurb { font-size: 16px; line-height: 1.05; } .nk-compact .nk-end ul { column-count: 2; column-gap: 14px; width: 100%; } .nk-compact .nk-end li { font-size: 15px; break-inside: avoid; }
+`;
+NK.isCompact = () => { try { return window.innerHeight <= 460 && window.innerWidth >= 560; } catch (e) { return false; } };
+NK.setCompact = (host, on) => {
+  try { NK.css("nk-compact-css", NK.CSS_COMPACT); host.root.classList.toggle("nk-compact", !!on); host.ov.style.paddingTop = on ? "6px" : ""; host.ov.style.paddingBottom = on ? "6px" : ""; } catch (e) { /* ignore */ }
+};
+
 /* minutes after midnight (may exceed 1440) -> "4:07 AM" */
 NK.clock = mins => {
   let m = Math.round(mins) % 1440; if (m < 0) m += 1440;
@@ -15905,7 +15992,7 @@ function solve(R) {
    UI
    ====================================================================== */
 const CSS = `
-.pl-board { width: 100%; max-width: 920px; margin-inline: auto; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pl-board { width: 100%; max-width: 820px; margin-inline: auto; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .pl-mid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: stretch; }
 .pl-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
 .pl-top .arc { font-family: var(--logo); font-size: clamp(13px, 3.2vw, 17px); color: var(--pink); }
@@ -15926,7 +16013,7 @@ const CSS = `
 .pl-slot:hover { border-color: var(--pink); }
 .pl-slot:focus-visible, .sk-card:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
 .pl-slot.drag, .sk-card.drag { opacity: .35; }
-.pl-info { font-size: 19px; line-height: 1.1; min-height: 4.6em; display: flex; flex-direction: column; gap: 3px; }
+.pl-info { font-size: 19px; line-height: 1.1; min-height: 3.4em; display: flex; flex-direction: column; gap: 3px; }
 .pl-info .fact { color: var(--cyan); font-size: 16px; } .pl-info .why { color: #ff8a8a; font-size: 17px; } .pl-info .why.good { color: var(--ok); }
 .pl-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 5px; padding: 6px; border: 1px dashed transparent; border-radius: 3px; }
 .pl-grade { display: flex; flex-direction: column; gap: 4px; justify-content: center; min-width: 150px; }
@@ -15939,6 +16026,22 @@ const CSS = `
   .pl-slot { min-height: 70px; padding: 3px; } .pl-slot .t { display: none; } .pl-slot .m .pips { display: none; }
   .pl-pool { grid-template-columns: minmax(0, 1fr); }
   .pl-mid { grid-template-columns: minmax(0, 1fr); } .pl-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; } .pl-grade .big { grid-column: 1 / -1; } .pl-grade .mini { grid-template-columns: 52px minmax(0, 1fr); }
+}
+
+@media (max-height: 460px) {
+  .overlay.mg-playlistOrder { padding: 4px 8px; }
+  .mg-playlistOrder .mg-wrap { gap: 4px; }
+  .mg-playlistOrder .mg-head { flex-wrap: nowrap; align-items: baseline; }
+  .mg-playlistOrder .mg-logo { font-size: 13px; } .mg-playlistOrder .mg-sub { font-size: 15px; }
+  .pl-board { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(230px, 36%); grid-template-rows: auto auto auto auto auto 1fr; grid-template-areas: "top pool" "graph pool" "slots pool" "mid pool" "acts pool" "msg pool"; gap: 4px 8px; align-content: start; }
+  .pl-top { grid-area: top; gap: 0 10px; flex-wrap: nowrap; } .pl-top .arc { font-size: 12px; white-space: nowrap; } .pl-top .bl { font-size: 14px; line-height: 1; min-width: 0; max-height: 2em; overflow: hidden; }
+  .pl-graph { grid-area: graph; } .pl-legend { display: none; }
+  .pl-slots { grid-area: slots; } .pl-slot { min-height: 52px; padding: 2px; } .pl-slot .t, .pl-slot .m .pips { display: none; } .pl-slot canvas { max-width: 28px; } .pl-slot .n { font-size: 9px; }
+  .pl-mid { grid-area: mid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; } .pl-info { min-height: 0; max-height: 38px; overflow: hidden; font-size: 14px; padding: 3px 6px; } .pl-info .mg-sub, .pl-info .fact { display: none; }
+  .pl-grade { flex-direction: row; align-items: center; gap: 8px; padding: 2px 8px; min-width: 0; display: flex; } .pl-grade .big { font-size: 22px; white-space: nowrap; } .pl-grade .big small { font-size: 11px !important; } .pl-grade .mini { grid-template-columns: auto 44px; font-size: 12px; gap: 3px; } .pl-grade .sk-meter { height: 8px; }
+  .pl-act { grid-area: acts; } .pl-act .btn { padding: 3px 10px; font-size: 18px; }
+  .pl-msg { grid-area: msg; font-size: 15px; line-height: 1.05; min-height: 0; max-height: 3.2em; overflow: hidden; }
+  .pl-pool { grid-area: pool; grid-template-columns: minmax(0, 1fr); max-height: calc(100vh - 44px); overflow-y: auto; padding: 0 2px 0 0; gap: 3px; border: 0; }
 }
 `;
 let cssDone = false;
@@ -15988,7 +16091,7 @@ RP.mg.register("playlistOrder", {
       const info = el("div", { cls: "mg-panel pl-info", "aria-live": "polite" }, mid);
       const grade = el("div", { cls: "mg-panel pl-grade" }, mid);
       const poolEl = el("div", { cls: "pl-pool", role: "listbox", "aria-label": "Records not yet placed" }, board);
-      const msg = el("div", { cls: "mg-msg", "aria-live": "polite" }, board);
+      const msg = el("div", { cls: "mg-msg pl-msg", "aria-live": "polite" }, board);
       const acts = el("div", { cls: "pl-act" }, board);
       const lockBtn = el("button", { cls: "btn primary", type: "button", text: "LOCK IT IN ▶", disabled: "disabled" }, acts);
       const clearBtn = el("button", { cls: "btn", type: "button", text: "CLEAR" }, acts);
@@ -16242,14 +16345,25 @@ const { el, clamp, R, P, ell, mulberry, hashStr, ramp, txt, txtC, txtW } = U;
 const K = ramp;
 
 const CSS = `
-.pt-deal { width: 100%; border-collapse: collapse; font-size: 19px; }
-.pt-deal td { padding: 3px 4px; border-bottom: 1px dashed #2d2456; vertical-align: top; }
-.pt-deal td:first-child { color: var(--muted); font-size: 16px; letter-spacing: .08em; white-space: nowrap; }
-.pt-deal tr.cur td:first-child { color: var(--pink); }
-.pt-deal tr.cur td { background: #1a1030; }
-.pt-deal tr.lock td:last-child { color: var(--ok); }
-.pt-deal tr.lock td:last-child::after { content: " [locked]"; color: var(--muted); font-size: 15px; }
-.pt-deal tr.expo td:nth-child(2) { color: #ff6a6a; }
+.pt-deal { display: grid; grid-template-columns: 1fr; }
+.pt-row { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 6px; padding: 3px 4px; border-bottom: 1px dashed #2d2456; font-size: 19px; line-height: 1.05; }
+.pt-row .lb { color: var(--muted); font-size: 16px; letter-spacing: .08em; }
+.pt-row.cur .lb { color: var(--pink); } .pt-row.cur { background: #1a1030; }
+.pt-row.lock .vl { color: var(--ok); } .pt-row.lock .vl::after { content: " [locked]"; color: var(--muted); font-size: 15px; }
+.pt-row.expo .vl { color: #ff6a6a; }
+.pt-play { display: grid; gap: 10px; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr auto auto auto; grid-template-areas: "stage hud" "stage notes" "say say" "choices choices" "tip tip"; align-items: start; }
+.pt-play.pt-neg { grid-template-rows: auto auto 1fr auto auto auto; grid-template-areas: "stage hud" "stage deal" "stage notes" "say say" "choices choices" "tip tip"; }
+.pt-play > .sk-stage { grid-area: stage; margin: 0; } .pt-play > .sk-hud { grid-area: hud; } .pt-play > .pt-dealbox { grid-area: deal; } .pt-play > .pt-notes { grid-area: notes; }
+.pt-play > .sk-say { grid-area: say; } .pt-play > .pt-choices { grid-area: choices; } .pt-play > .sk-tip { grid-area: tip; } .pt-play > .pt-brk { display: none; }
+@media (max-width: 959px) { .pt-play, .pt-play.pt-neg { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "stage" "hud" "notes" "say" "choices" "tip"; } .pt-play.pt-neg { grid-template-areas: "stage" "hud" "deal" "notes" "say" "choices" "tip"; } .pt-play > .sk-stage { margin: 0 auto; } }
+@media (max-height: 460px) and (min-width: 560px) {
+  .pt-play { display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; gap: 6px 8px; height: calc(100vh - 56px); }
+  .pt-play > * { grid-area: auto; box-sizing: border-box; }
+  .pt-play > .sk-stage { order: 1; width: 330px; } .pt-play > .pt-dealbox { order: 2; width: 330px; } .pt-play > .pt-notes { order: 3; width: 330px; }
+  .pt-play > .pt-brk { display: block; order: 4; flex: 0 0 100%; width: 0; }
+  .pt-play > .sk-hud { order: 5; width: calc(100% - 346px); } .pt-play > .sk-say { order: 6; width: calc(100% - 346px); } .pt-play > .pt-choices { order: 7; width: calc(100% - 346px); } .pt-play > .sk-tip { order: 8; }
+  .pt-deal { grid-template-columns: 1fr 1fr; column-gap: 8px; } .pt-row { grid-template-columns: 1fr; gap: 0; font-size: 17px; padding: 1px 4px; } .pt-row .lb { font-size: 13px; } .pt-row.lock .vl::after { content: " *"; }
+}
 .pt-peek { margin-top: 6px; }
 .pt-hide { display: none; }
 `;
@@ -16493,6 +16607,7 @@ async function run(host, p, SK) {
   if (!cssDone) { el("style", { text: CSS }, document.head); cssDone = true; }
   SK.css();
   const S = SK.session(host), root = host.root;
+  try { host.ov.classList.add("sk-g"); } catch (e) { /* ignore */ }
   const diff = clamp(Math.round(p.difficulty || 2), 1, 5);
   const pname = String(p.promoter || "Vic");
   const ask = String(p.ask || "a monthly");
@@ -16557,9 +16672,9 @@ async function run(host, p, SK) {
     extra: box => { const n = el("div", { cls: "sk-note" }, box); el("h3", { text: neg ? "WHAT MARCUS DUG UP ABOUT " + party.toUpperCase() : "YOUR HOMEWORK ON " + party.toUpperCase() }, n); const ul = el("ul", {}, n); notes.forEach(t => el("li", { text: t }, ul)); },
     button: "START"
   });
-  const grid = el("div", { cls: "sk-grid" }, wrap);
-  const stageApi = SK.canvas(grid, 320, 160, 2);
-  const side = el("div", { cls: "sk-side" }, grid);
+  const play = el("div", { cls: "pt-play" + (neg ? " pt-neg" : "") }, wrap);
+  const grid = play, side = play;
+  const stageApi = SK.canvas(play, 320, 160, 2);
   const hud = el("div", { cls: "sk-hud" }, side);
   const startPat = clamp(Math.round(p.patience || (neg ? [12, 11, 10, 9, 8] : [9, 8, 7, 7, 6])[diff - 1]), 3, 20);
   const startInt = neg ? [45, 40, 35, 30, 25][diff - 1] : [35, 30, 25, 20, 15][diff - 1];
@@ -16568,12 +16683,14 @@ async function run(host, p, SK) {
   const dealRows = {};
   let peeked = true, notesApi = null;
   if (neg) {
-    const dealBox = el("div", { cls: "sk-note" }, side);
+    const dealBox = el("div", { cls: "sk-note pt-dealbox" }, side);
     el("h3", { text: "THE OFFER \u2014 " + party.toUpperCase() }, dealBox);
-    const t = el("table", { cls: "pt-deal" }, dealBox);
-    ["fee", "flights", "hotel", "rider"].forEach(id => { const tr = el("tr", {}, t); el("td", { text: TERMS[id].label }, tr); const td = el("td", { text: "-" }, tr); dealRows[id] = { tr, td }; });
+    const t = el("div", { cls: "pt-deal" }, dealBox);
+    ["fee", "flights", "hotel", "rider"].forEach(id => { const tr = el("div", { cls: "pt-row" }, t); el("span", { cls: "lb", text: TERMS[id].label }, tr); const td = el("span", { cls: "vl", text: "-" }, tr); dealRows[id] = { tr, td }; });
   }
   notesApi = SK.noteBox(side, neg ? "WHAT YOU KNOW" : "NOTES ON " + party.toUpperCase(), notes);
+  notesApi.box.classList.add("pt-notes");
+  el("div", { cls: "pt-brk" }, play);
   if (diff >= 4 && !neg) {
     peeked = false; notesApi.set(false);
     const pk = el("button", { cls: "kbtn pt-peek", type: "button", text: "CHECK NOTES (-1 PATIENCE) [N]" }, notesApi.box);
@@ -16583,9 +16700,9 @@ async function run(host, p, SK) {
     S.extraKey = e => { if (e.key === "n" || e.key === "N") peek(); };
     host.cleanup(() => { S.extraKey = null; });
   }
-  const say = SK.say(S, wrap);
-  const choiceBox = el("div", {}, wrap);
-  const tipEl = el("div", { cls: "sk-tip", text: "Keys 1-6 pick a line · click or Space skips the typing" }, wrap);
+  const say = SK.say(S, play);
+  const choiceBox = el("div", { cls: "pt-choices" }, play);
+  const tipEl = el("div", { cls: "sk-tip", text: "Keys 1-6 pick a line · click or Space skips the typing" }, play);
 
   // ---- scene
   const scene = paintOffice(party, pname, seed, null);
@@ -16760,7 +16877,7 @@ async function run(host, p, SK) {
     const order = ["fee"].concat(SK.shuffle(["flights", "hotel", "rider"], rnd));
     const T = {};
     order.forEach(id => { T[id] = { id, rung: TERMS[id].init, top: TERMS[id].rungs.length - 1, locked: false, counters: 0 }; });
-    const setRow = (id, cls) => { const row = dealRows[id], t = T[id]; row.td.textContent = fmt(TERMS[id].rungs[t.rung][0]); row.tr.className = (cls || "") + (t.locked ? " lock" : "") + (id === "fee" && t.rung === 0 ? " expo" : ""); };
+    const setRow = (id, cls) => { const row = dealRows[id], t = T[id]; row.td.textContent = fmt(TERMS[id].rungs[t.rung][0]); row.tr.className = "pt-row " + (cls || "") + (t.locked ? " lock" : "") + (id === "fee" && t.rung === 0 ? " expo" : ""); };
     order.forEach(id => { dealRows[id].td.textContent = "?"; });
     setExpr("", "stand");
     await proSay("Alright. " + party + " wants you. Here's the offer. Brace yourself.");
@@ -16894,8 +17011,7 @@ async function run(host, p, SK) {
     stats.push(["FEE", deal.terms.fee, fr >= 3 ? "ok" : fr === 0 ? "bad" : ""], ["FLIGHTS", deal.terms.flights], ["HOTEL", deal.terms.hotel], ["RIDER", deal.terms.rider]);
   }
   await S.wait(500);
-  wrap.querySelectorAll(".sk-grid,.sk-say,.sk-tip").forEach(n => { n.style.display = "none"; });
-  choiceBox.style.display = "none";
+  play.style.display = "none";
   const stamp = { w: 64, h: 24, k: 4, draw(g) {
     const col = ok ? "#9be15d" : "#ff6a6a", w = ok ? (neg ? "BOOKED" : deal.slot === "monthly" ? "BOOKED" : "TRIAL") : "NO DEAL";
     R(g, 0, 0, 64, 24, "#0a0716"); R(g, 1, 1, 62, 22, col); R(g, 3, 3, 58, 18, "#0a0716");
@@ -17725,18 +17841,20 @@ let cssDone = false;
 K.css = function () { if (cssDone) return; cssDone = true; el("style", { text: CSS }, document.head); };
 
 /* fit a low-res canvas into its container: integer scale when it can, otherwise shrink */
-K.fit = function (host, cv, W, H, parent, maxK) {
+K.fit = function (host, cv, W, H, parent, maxK, reserve) {
   const apply = () => {
     const p = parent || cv.parentElement; if (!p) return;
     const avail = Math.max(120, p.clientWidth || 320);
     let k = avail >= W * 2 ? Math.floor(avail / W) : (avail >= W ? 1 : avail / W);
+    if (reserve && window.innerHeight <= 460) k = Math.max(0.5, Math.min(avail / W, (window.innerHeight - reserve) / H)); // landscape phones: fit the height
     if (maxK) k = Math.min(k, maxK);
     cv.style.width = Math.round(W * k) + "px"; cv.style.height = Math.round(H * k) + "px";
   };
   apply();
   let ro = null;
-  try { ro = new ResizeObserver(apply); ro.observe(parent || cv.parentElement); } catch (e) { window.addEventListener("resize", apply); }
-  host.cleanup(() => { try { ro ? ro.disconnect() : window.removeEventListener("resize", apply); } catch (e) { /* ignore */ } });
+  window.addEventListener("resize", apply);
+  try { ro = new ResizeObserver(apply); ro.observe(parent || cv.parentElement); } catch (e) { /* resize listener is enough */ }
+  host.cleanup(() => { try { window.removeEventListener("resize", apply); ro && ro.disconnect(); } catch (e) { /* ignore */ } });
   return apply;
 };
 
@@ -18534,6 +18652,26 @@ const CSS = `
   .st-ctl.sticky { position: sticky; bottom: 0; z-index: 5; background: rgba(10, 8, 22, .97); padding: 6px; border-color: var(--pink); }
   .st-time { font-size: 38px; }
 }
+@media (max-height: 460px) {
+  .overlay.mg-setTime { padding: 4px 8px; }
+  .mg-setTime .mg-wrap { gap: 4px; }
+  .mg-setTime .mg-head { flex-wrap: nowrap; align-items: baseline; }
+  .mg-setTime .mg-logo { font-size: 13px; } .mg-setTime .mg-sub { font-size: 15px; }
+  .st-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 36%); gap: 8px; align-items: start; }
+  .st-left, .st-right { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .st-time { font-size: 28px; } .st-time small { font-size: 15px; }
+  .st-slotl, .st-chiprow { display: none; }
+  .st-g .lab { font-size: 15px; } .st-bar { height: 11px; }
+  .st-tr { padding: 5px 8px; gap: 3px; } .st-now { font-size: 16px; } .st-now small { font-size: 13px; } .st-trk { height: 14px; } .st-trk span { font-size: 13px; line-height: 14px; } .st-next { font-size: 15px; }
+  .st-ctl.sticky { position: static; padding: 3px 6px; gap: 4px; } .st-ctl .btn { padding: 3px 8px; font-size: 17px; } .st-ctl .btn small { display: none; }
+  .st-msg { font-size: 16px; min-height: 0; line-height: 1.05; max-height: 2.2em; overflow: hidden; } .st-say { display: none; }
+  .st-crate { max-height: calc(100vh - 150px); overflow-y: auto; gap: 3px; padding-right: 2px; }
+  .st-left { position: relative; }
+  .st-evbox { position: absolute; margin: 0; max-height: 100%; overflow: auto; background: rgba(8, 5, 18, .88); }
+  .st-evbox .ch { flex-direction: row; } .st-evbox .ch .btn { flex: 1 1 30%; min-width: 120px; }
+  .st-ev .tx { font-size: 16px; } .st-ev .who { font-size: 14px; } .st-ev canvas { width: 40px; height: 40px; } .st-ev { grid-template-columns: 40px minmax(0, 1fr); padding: 5px; }
+  .st-briefbox { position: absolute; margin: 0; z-index: 6; } .st-brief { padding: 6px 10px; gap: 3px; } .st-brief p, .st-brief ul { font-size: 15px; } .st-brief h3 { font-size: 13px; } .st-brief .goal { font-size: 16px; }
+}
 @media (prefers-reduced-motion: reduce) { .st-ctl .btn.ready { box-shadow: 0 0 0 2px var(--ok); } }
 `;
 let cssDone = false;
@@ -18578,7 +18716,7 @@ RP.mg.register("setTime", {
       const sceneBox = el("div", { cls: "st-sceneBox" }, left);
       const W = 320, H = 144;
       const cv = el("canvas", { cls: "sk-cv px", width: W, height: H, role: "img", "aria-label": "The club from the dance floor" }, sceneBox), sc = cv.getContext("2d");
-      kit.fit(host, cv, W, H, sceneBox);
+      kit.fit(host, cv, W, H, sceneBox, 0, 192);
       // transport
       const tr = el("div", { cls: "mg-panel st-tr" }, left);
       const now = el("div", { cls: "st-now" }, tr);
@@ -18656,7 +18794,10 @@ RP.mg.register("setTime", {
       }
 
       /* ---------- briefing ---------- */
+      function placeBrief() { const par = window.innerHeight <= 460 ? left : sceneBox; if (briefBox.parentNode !== par) par.appendChild(briefBox); }
+      window.addEventListener("resize", placeBrief); host.cleanup(() => window.removeEventListener("resize", placeBrief));
       function showBrief() {
+        placeBrief();
         const B = R.D.brief, rep = s => s.replace(/\{L\}/g, R.legendShort);
         briefBox.hidden = false; briefBox.innerHTML = "";
         const bx = el("div", { cls: "st-brief" }, briefBox);
@@ -19147,7 +19288,7 @@ const CSS = `
 .sk-note b { font-weight: 400; color: var(--cyan); }
 .sk-note { position: relative; } .sk-note .sk-tg { display: none; position: absolute; right: 8px; top: 6px; font-size: 16px; padding: 2px 10px; min-width: 0; }
 .sk-note.closed ul { display: none; } .sk-note.closed h3 { margin-bottom: 0; }
-@media (max-width: 559px) { .sk-note .sk-tg { display: block; } }
+@media (max-width: 559px), (max-height: 460px) { .sk-note .sk-tg { display: block; } }
 .sk-intro, .sk-end { background: #120e24; border: 2px solid #3a3070; box-shadow: inset 0 0 0 2px #0c0919, 0 6px 0 #000; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
 .sk-intro { align-items: stretch; text-align: left; }
 .sk-intro h2, .sk-end h2 { margin: 0; font-family: var(--logo); font-weight: 400; font-size: clamp(16px, 4vw, 26px); line-height: 1.25; color: #fff; text-shadow: 0 3px 0 #2a0d3a; }
@@ -19170,6 +19311,20 @@ const CSS = `
 @media (max-width: 480px) {
   .sk-say .tx { font-size: 23px; } .sk-choice { font-size: 21px; padding: 7px 8px; } .sk-intro, .sk-end { padding: 12px; }
   .sk-intro ol { font-size: 21px; }
+}
+@media (max-height: 460px) {
+  .overlay.sk-g { padding-top: 4px; padding-bottom: 4px; }
+  .sk-g .mg-wrap { gap: 5px; margin-block: 0; }
+  .sk-g .mg-logo { font-size: 15px; } .sk-g .mg-sub { font-size: 16px; }
+  .sk-g .sk-wrap { gap: 6px; }
+  .sk-g .sk-say { min-height: 50px; padding: 4px 10px 6px; } .sk-g .sk-say .nm { font-size: 10px; margin-bottom: 2px; } .sk-g .sk-say .tx { font-size: 21px; }
+  .sk-g .sk-choices { gap: 3px; } .sk-g .sk-choice { min-height: 28px; padding: 2px 8px; font-size: 18px; } .sk-g .sk-choice .tag { font-size: 12px; margin-right: 5px; }
+  .sk-g .sk-meter .lab { font-size: 15px; } .sk-g .sk-meter .bar { height: 12px; } .sk-g .sk-meter.pips .bar { height: 16px; }
+  .sk-g .sk-note { padding: 4px 8px; font-size: 17px; } .sk-g .sk-note h3 { font-size: 15px; margin-bottom: 2px; }
+  .sk-g .sk-intro, .sk-g .sk-end { padding: 8px 12px; gap: 5px; } .sk-g .sk-intro ol { font-size: 18px; gap: 2px; } .sk-g .sk-intro h2, .sk-g .sk-end h2 { font-size: 15px; }
+  .sk-g .sk-intro .sk-note ul { display: block; columns: 2; column-gap: 18px; } .sk-g .sk-intro .sk-note li { break-inside: avoid; } .sk-g .sk-intro .kick { font-size: 15px; } .sk-g .sk-intro .mg-msg { font-size: 19px; }
+  .sk-g .sk-end .score { font-size: 24px; } .sk-g .sk-end .stat b { font-size: 21px; } .sk-g .sk-end canvas { width: 128px !important; height: 48px !important; } .sk-g .sk-end .sub { font-size: 19px; }
+  .sk-g .sk-tip { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .sk-say .more { animation: none; } .sk-meter .fill { transition: none; } .sk-meter.hit .bar { animation: none; } }
 `;
@@ -19210,7 +19365,7 @@ SK.leave = function (host, head, S, onLeave) {
 };
 
 /* ------------------------------------------------------------------ canvas */
-SK.canvas = function (parent, w, h, maxK = 2) {
+SK.canvas = function (parent, w, h, maxK = 2, shortK = 1) {
   const stage = el("div", { cls: "sk-stage" }, parent);
   const cv = el("canvas", { cls: "px", width: w, height: h, role: "img" }, stage);
   const c = cv.getContext("2d");
@@ -19220,7 +19375,7 @@ SK.canvas = function (parent, w, h, maxK = 2) {
     const vw = document.documentElement.clientWidth || window.innerWidth || 800, vh = document.documentElement.clientHeight || window.innerHeight || 600;
     const availW = Math.min(vw - 32, 980) - (vw >= 960 && !api.noSide ? 326 : 0);
     let k = Math.floor((availW - 4) / w);
-    if (vh < 600) k = Math.min(k, 1);
+    if (vh < 600) k = Math.min(k, shortK);
     k = clamp(k, 1, maxK);
     api.k = k;
     cv.style.width = w * k + "px"; cv.style.height = h * k + "px";
@@ -19378,7 +19533,7 @@ SK.endCard = function (S, root, o) {
 SK.noteBox = function (parent, title, items, o = {}) {
   const box = el("div", { cls: "sk-note" }, parent);
   const h = el("h3", { text: title }, box);
-  const narrow = (document.documentElement.clientWidth || window.innerWidth) < 560;
+  const narrow = (document.documentElement.clientWidth || window.innerWidth) < 560 || (window.innerHeight || 800) < 460;
   const ul = el("ul", {}, box);
   items.forEach(t => el("li", { text: t }, ul));
   const tg = el("button", { cls: "kbtn sk-tg", type: "button", text: "SHOW" }, box);
@@ -19701,6 +19856,13 @@ const CSS = `
 .sc-two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .sc-note { font-size: 16px !important; }
 .sc-over { position: relative; }
+.sc-main.compact { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "stage right" "info right" "acts right"; grid-template-rows: auto auto 1fr; gap: 4px 8px; }
+.sc-main.compact .sc-stage { margin: 0; } .sc-main.compact .sc-queue, .sc-main.compact .sc-qlabel { display: none; }
+.sc-main.compact .sc-panel { min-height: 0; overflow-y: auto; padding: 6px; gap: 5px; } .sc-main.compact .sc-panel > p, .sc-main.compact .sc-panel .sc-note { display: none; } .sc-main.compact .sc-panel h3 { font-size: 17px; }
+.sc-main.compact .sc-right { gap: 4px; } .sc-main.compact .sc-test { padding: 4px; gap: 4px; } .sc-main.compact .sc-test .kbtn { padding: 3px 2px; font-size: 16px; }
+.sc-main.compact .sc-tabs { gap: 3px; } .sc-main.compact .sc-tab { padding: 2px 1px; font-size: 15px; border-bottom-width: 2px; }
+.sc-main.compact .sc-eq input { height: 52px; } .sc-main.compact .sc-card { padding: 4px 6px; gap: 3px; } .sc-main.compact .sc-card .t { font-size: 17px; } .sc-main.compact .sc-strip { padding: 4px; gap: 3px; }
+.sc-main.compact .sc-card { flex-direction: row; flex-wrap: wrap; align-items: center; } .sc-main.compact .sc-card .t { flex: 1 1 100%; } .sc-main.compact .sc-info { gap: 2px; } .sc-main.compact .sc-clock { font-size: 18px; } .sc-main.compact .sc-acts { gap: 6px; }
 @media (max-width: 860px) { .sc-clock { font-size: 20px; } .sc-panel { min-height: 0; } .sc-info .mg-msg { font-size: 20px; } .sc-acts .btn { padding: 6px 12px; } }
 @media (max-width: 420px) { .sc-test .kbtn { font-size: 16px; } .sc-tab { font-size: 16px; } .sc-eq input { height: 74px; } }
 @media (prefers-reduced-motion: reduce) { .sc-scene { cursor: pointer; } }
@@ -20626,13 +20788,23 @@ RP.mg.register("soundCheck", {
       rebuildHot(); tabSelect("decks"); syncAll();
       NK.onResize(host, layout);
       function layout() {
+        const compact = NK.isCompact();
+        NK.setCompact(host, compact);
         const avail = root.clientWidth || 700;
-        const wide = avail >= 940;
-        main.classList.toggle("wide", wide);
-        const boxW = wide ? 640 : avail;
-        const sc = NK.fit(scene.cv, { clientWidth: boxW }, W, H, wide ? 640 : 820);
+        const wide = !compact && avail >= 940;
+        main.classList.toggle("wide", wide); main.classList.toggle("compact", compact);
+        let sc;
+        if (compact) {
+          const w = Math.max(280, Math.min(avail * 0.5, (window.innerHeight - 170) * 1.6));
+          sc = w / W; main.style.gridTemplateColumns = Math.round(w) + "px minmax(0, 1fr)"; scene.cv.style.width = Math.round(w) + "px"; scene.cv.style.height = Math.round(H * sc) + "px";
+          panel.style.maxHeight = Math.max(120, window.innerHeight - 24 - (test.offsetHeight || 64) - (tabsEl.offsetHeight || 52) - 36) + "px";
+        } else {
+          panel.style.maxHeight = ""; main.style.gridTemplateColumns = "";
+          const boxW = wide ? 640 : avail;
+          sc = NK.fit(scene.cv, { clientWidth: boxW }, W, H, wide ? 640 : 820);
+        }
         queue.cv.style.width = scene.cv.style.width; queue.cv.style.height = Math.round(14 * sc) + "px";
-        ql.style.width = scene.cv.style.width; ql.style.marginInline = wide ? "0" : "auto";
+        ql.style.width = scene.cv.style.width; ql.style.marginInline = wide || compact ? "0" : "auto";
       }
       layout();
       let last = null, accSync = 0, lastLeft = -1;
@@ -23782,9 +23954,10 @@ function paintDoor(c, S) {
 
 function lightDoor(S) {
   return {
-    ambient: "#2e2450",
+    ambient: "#40366a",
     lights: [
       { x: 356, y: 56, r: 190, color: "#ff3fa4", steps: 4, sy: 1.1, rim: true },
+      { x: 110, y: 210, r: 170, color: "#8a7ac8", steps: 3, power: 0.5 },   // spill from the street, so the line reads
       { x: 356, y: 64, r: 150, color: "#ff2a2a", steps: 3, power: 0.7 },
       { x: 150, y: 40, r: 190, color: "#6a5ab8", steps: 3, power: 0.5 },
       { x: 560, y: 50, r: 170, color: "#39d0ff", steps: 3, power: 0.5, rim: true },
@@ -23976,8 +24149,9 @@ function paintNowhere(c, S) {
 function lightNowhere(S) {
   const good = !!S.f.a1_setGood;
   return {
-    ambient: "#1e1236",
+    ambient: "#34265a",
     lights: [
+      { x: 320, y: 236, r: 280, color: "#9a80e0", steps: 3, power: 0.45 },   // booth glow on the floor: faces read in the dark
       { x: 190, y: 120, r: 210, color: "#ff3fa4", steps: 4, sy: 1.2, power: good ? 0.9 : 0.6, rim: true },
       { x: 450, y: 120, r: 210, color: "#39d0ff", steps: 4, sy: 1.2, power: good ? 0.9 : 0.6, rim: true },
       { x: 320, y: 60, r: 170, color: "#a05cff", steps: 3, power: 0.6 },
@@ -25738,7 +25912,7 @@ async function buyDeck(S) {
   RP.money(-spent);
   RP.setGear("turntables", gid);
   RP.give("a2_tts");
-  S.f.a2_turntables = true; S.f.a2_paid = spent;
+  S.f.a2_turntables = true; S.f.a2_paid = spent; S.f.firstTT = gid;
   RP.followers(10);
   RP.sfx("success");
   const g = RP.gearInfo(gid);
@@ -36763,6 +36937,7 @@ RP.chars.define("kid", { name: "you", height: 96, skin: "#e0a27a", hair: { style
   shoes: { style: "sneakers", color: "#efeaf6" }, acc: [], voice: "#ffffff" });
 
 let titleEl = null;
+const DEMO = window.RP_DEMO || null;   // set by the Level 1 build (tools/build.mjs --level1)
 function paintTitle(c) {
   const w = 320, h = 180, rnd = mulberry(11);
   const sky = ["#0d0826", "#160c38", "#22104a", "#36155a", "#521d66", "#6e2a6e"];
@@ -36815,11 +36990,15 @@ function showTitle() {
   const first = [];
   if (RP.hasSave()) first.push(add("CONTINUE", async () => { closeTitle(); if (!(await RP.loadSave())) { showTitle(); } }));
   first.push(add("NEW GAME", () => newGame(panel)));
-  add("CHAPTER SELECT", () => chapters(panel));
+  if (Object.keys(RP.acts).length > 1) add("CHAPTER SELECT", () => chapters(panel));
   add("MINI-GAME ARCADE", () => arcade(panel));
   add("HOW TO PLAY", () => toggle(panel, howTo));
   add("CREDITS", () => toggle(panel, credits));
-  el("p", { cls: "small", text: "Five levels. Sixteen mini-games. Sound on helps." }, box);
+  if (DEMO) {
+    el("p", { cls: "small", text: "Level 1 of " + DEMO.levels + ": Bedroom DJ, plus all sixteen mini-games in the arcade. Sound on helps." }, box);
+    const full = el("a", { cls: "small fullgame", href: DEMO.full, target: "_blank", rel: "noopener", text: "Play the full game (all five levels) \u2192" }, box);
+    full.style.color = "var(--cyan)";
+  } else el("p", { cls: "small", text: "Five levels. Sixteen mini-games. Sound on helps." }, box);
   setTimeout(() => first[0] && first[0].focus({ preventScroll: true }), 50);
 }
 function closeTitle() { if (titleEl) { titleEl.remove(); titleEl = null; } RP.hideGame(false); RP.layout(); }
@@ -36889,7 +37068,26 @@ function arcade(panel) {
 }
 
 RP.onQuit = () => { RP.audio.stopAll(0.3); showTitle(); };
+/* Level 1 build: finishing the level leads here instead of into Level 2 */
+async function demoEnding() {
+  RP.audio.setMusic(null);
+  const ov = RP.overlay("card");
+  const box = el("div", { cls: "cardbox" }, ov);
+  el("div", { cls: "kicker", text: "END OF LEVEL 1" }, box);
+  el("h2", { html: "TO BE <span style='color:var(--pink)'>CONTINUED</span>" }, box);
+  const S = RP.state;
+  el("p", { text: (S.name || "You") + " played Nowhere. The bartenders danced. Dante says he'll pay you next week." }, box);
+  el("p", { text: "Still to come: Underground Hustler, Club DJ, Touring DJ and Superstar DJ. Plasma money, a loft party with a dead PA, a residency, a flight to Berlin, and a festival headline set." }, box);
+  const row = el("div", { cls: "erow" }, box);
+  el("a", { cls: "btn primary", href: DEMO.full, target: "_blank", rel: "noopener", text: "PLAY THE FULL GAME", style: "text-decoration:none" }, row);
+  const b = el("button", { cls: "btn", type: "button", text: "BACK TO TITLE" }, row);
+  await new Promise(r => b.addEventListener("click", r));
+  ov.remove();
+  RP.clearSave();
+  showTitle();
+}
 RP.ending = async function () {
+  if (DEMO) return demoEnding();
   RP.audio.setMusic(null);
   const ov = RP.overlay("card");
   const box = el("div", { cls: "cardbox" }, ov);

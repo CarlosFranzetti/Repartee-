@@ -22,16 +22,17 @@ const CSS = `
 .pt-row.cur .lb { color: var(--pink); } .pt-row.cur { background: #1a1030; }
 .pt-row.lock .vl { color: var(--ok); } .pt-row.lock .vl::after { content: " [locked]"; color: var(--muted); font-size: 15px; }
 .pt-row.expo .vl { color: #ff6a6a; }
-.pt-play { display: grid; gap: 10px; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "stage hud" "stage deal" "stage notes" "say say" "choices choices" "tip tip"; align-items: start; }
+.pt-play { display: grid; gap: 10px; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr auto auto auto; grid-template-areas: "stage hud" "stage notes" "say say" "choices choices" "tip tip"; align-items: start; }
+.pt-play.pt-neg { grid-template-rows: auto auto 1fr auto auto auto; grid-template-areas: "stage hud" "stage deal" "stage notes" "say say" "choices choices" "tip tip"; }
 .pt-play > .sk-stage { grid-area: stage; margin: 0; } .pt-play > .sk-hud { grid-area: hud; } .pt-play > .pt-dealbox { grid-area: deal; } .pt-play > .pt-notes { grid-area: notes; }
 .pt-play > .sk-say { grid-area: say; } .pt-play > .pt-choices { grid-area: choices; } .pt-play > .sk-tip { grid-area: tip; } .pt-play > .pt-brk { display: none; }
-@media (max-width: 959px) { .pt-play { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "hud" "deal" "notes" "say" "choices" "tip"; } .pt-play > .sk-stage { margin: 0 auto; } }
+@media (max-width: 959px) { .pt-play, .pt-play.pt-neg { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "stage" "hud" "notes" "say" "choices" "tip"; } .pt-play.pt-neg { grid-template-areas: "stage" "hud" "deal" "notes" "say" "choices" "tip"; } .pt-play > .sk-stage { margin: 0 auto; } }
 @media (max-height: 460px) and (min-width: 560px) {
   .pt-play { display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; gap: 6px 8px; height: calc(100vh - 56px); }
-  .pt-play > * { grid-area: auto; }
+  .pt-play > * { grid-area: auto; box-sizing: border-box; }
   .pt-play > .sk-stage { order: 1; width: 330px; } .pt-play > .pt-dealbox { order: 2; width: 330px; } .pt-play > .pt-notes { order: 3; width: 330px; }
   .pt-play > .pt-brk { display: block; order: 4; flex: 0 0 100%; width: 0; }
-  .pt-play > .sk-hud { order: 5; width: calc(100% - 350px); } .pt-play > .sk-say { order: 6; width: calc(100% - 350px); } .pt-play > .pt-choices { order: 7; width: calc(100% - 350px); } .pt-play > .sk-tip { order: 8; }
+  .pt-play > .sk-hud { order: 5; width: calc(100% - 346px); } .pt-play > .sk-say { order: 6; width: calc(100% - 346px); } .pt-play > .pt-choices { order: 7; width: calc(100% - 346px); } .pt-play > .sk-tip { order: 8; }
   .pt-deal { grid-template-columns: 1fr 1fr; column-gap: 8px; } .pt-row { grid-template-columns: 1fr; gap: 0; font-size: 17px; padding: 1px 4px; } .pt-row .lb { font-size: 13px; } .pt-row.lock .vl::after { content: " *"; }
 }
 .pt-peek { margin-top: 6px; }
@@ -342,7 +343,7 @@ async function run(host, p, SK) {
     extra: box => { const n = el("div", { cls: "sk-note" }, box); el("h3", { text: neg ? "WHAT MARCUS DUG UP ABOUT " + party.toUpperCase() : "YOUR HOMEWORK ON " + party.toUpperCase() }, n); const ul = el("ul", {}, n); notes.forEach(t => el("li", { text: t }, ul)); },
     button: "START"
   });
-  const play = el("div", { cls: "pt-play" }, wrap);
+  const play = el("div", { cls: "pt-play" + (neg ? " pt-neg" : "") }, wrap);
   const grid = play, side = play;
   const stageApi = SK.canvas(play, 320, 160, 2);
   const hud = el("div", { cls: "sk-hud" }, side);
@@ -370,9 +371,9 @@ async function run(host, p, SK) {
     S.extraKey = e => { if (e.key === "n" || e.key === "N") peek(); };
     host.cleanup(() => { S.extraKey = null; });
   }
-  const say = SK.say(S, wrap);
-  const choiceBox = el("div", {}, wrap);
-  const tipEl = el("div", { cls: "sk-tip", text: "Keys 1-6 pick a line · click or Space skips the typing" }, wrap);
+  const say = SK.say(S, play);
+  const choiceBox = el("div", { cls: "pt-choices" }, play);
+  const tipEl = el("div", { cls: "sk-tip", text: "Keys 1-6 pick a line · click or Space skips the typing" }, play);
 
   // ---- scene
   const scene = paintOffice(party, pname, seed, null);

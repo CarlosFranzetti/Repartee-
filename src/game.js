@@ -10,6 +10,7 @@ RP.chars.define("kid", { name: "you", height: 96, skin: "#e0a27a", hair: { style
   shoes: { style: "sneakers", color: "#efeaf6" }, acc: [], voice: "#ffffff" });
 
 let titleEl = null;
+const DEMO = window.RP_DEMO || null;   // set by the Level 1 build (tools/build.mjs --level1)
 function paintTitle(c) {
   const w = 320, h = 180, rnd = mulberry(11);
   const sky = ["#0d0826", "#160c38", "#22104a", "#36155a", "#521d66", "#6e2a6e"];
@@ -62,11 +63,15 @@ function showTitle() {
   const first = [];
   if (RP.hasSave()) first.push(add("CONTINUE", async () => { closeTitle(); if (!(await RP.loadSave())) { showTitle(); } }));
   first.push(add("NEW GAME", () => newGame(panel)));
-  add("CHAPTER SELECT", () => chapters(panel));
+  if (Object.keys(RP.acts).length > 1) add("CHAPTER SELECT", () => chapters(panel));
   add("MINI-GAME ARCADE", () => arcade(panel));
   add("HOW TO PLAY", () => toggle(panel, howTo));
   add("CREDITS", () => toggle(panel, credits));
-  el("p", { cls: "small", text: "Five levels. Sixteen mini-games. Sound on helps." }, box);
+  if (DEMO) {
+    el("p", { cls: "small", text: "Level 1 of " + DEMO.levels + ": Bedroom DJ, plus all sixteen mini-games in the arcade. Sound on helps." }, box);
+    const full = el("a", { cls: "small fullgame", href: DEMO.full, target: "_blank", rel: "noopener", text: "Play the full game (all five levels) \u2192" }, box);
+    full.style.color = "var(--cyan)";
+  } else el("p", { cls: "small", text: "Five levels. Sixteen mini-games. Sound on helps." }, box);
   setTimeout(() => first[0] && first[0].focus({ preventScroll: true }), 50);
 }
 function closeTitle() { if (titleEl) { titleEl.remove(); titleEl = null; } RP.hideGame(false); RP.layout(); }
@@ -136,7 +141,26 @@ function arcade(panel) {
 }
 
 RP.onQuit = () => { RP.audio.stopAll(0.3); showTitle(); };
+/* Level 1 build: finishing the level leads here instead of into Level 2 */
+async function demoEnding() {
+  RP.audio.setMusic(null);
+  const ov = RP.overlay("card");
+  const box = el("div", { cls: "cardbox" }, ov);
+  el("div", { cls: "kicker", text: "END OF LEVEL 1" }, box);
+  el("h2", { html: "TO BE <span style='color:var(--pink)'>CONTINUED</span>" }, box);
+  const S = RP.state;
+  el("p", { text: (S.name || "You") + " played Nowhere. The bartenders danced. Dante says he'll pay you next week." }, box);
+  el("p", { text: "Still to come: Underground Hustler, Club DJ, Touring DJ and Superstar DJ. Plasma money, a loft party with a dead PA, a residency, a flight to Berlin, and a festival headline set." }, box);
+  const row = el("div", { cls: "erow" }, box);
+  el("a", { cls: "btn primary", href: DEMO.full, target: "_blank", rel: "noopener", text: "PLAY THE FULL GAME", style: "text-decoration:none" }, row);
+  const b = el("button", { cls: "btn", type: "button", text: "BACK TO TITLE" }, row);
+  await new Promise(r => b.addEventListener("click", r));
+  ov.remove();
+  RP.clearSave();
+  showTitle();
+}
 RP.ending = async function () {
+  if (DEMO) return demoEnding();
   RP.audio.setMusic(null);
   const ov = RP.overlay("card");
   const box = el("div", { cls: "cardbox" }, ov);

@@ -812,9 +812,9 @@ RP.mg.register("afterParty", {
         main.classList.toggle("wide", wide); main.classList.toggle("compact", compact);
         if (compact) {
           const w = Math.max(280, Math.min(avail * 0.5, (window.innerHeight - 172) * (W / H)));
-          scene.cv.style.width = Math.round(w) + "px"; scene.cv.style.height = Math.round(w * H / W) + "px";
+          main.style.gridTemplateColumns = Math.round(w) + "px minmax(0, 1fr)"; scene.cv.style.width = Math.round(w) + "px"; scene.cv.style.height = Math.round(w * H / W) + "px";
           phone.style.height = Math.max(200, window.innerHeight - 22) + "px";
-        } else { phone.style.height = ""; NK.fit(scene.cv, { clientWidth: wide ? 640 : avail }, W, H, wide ? 640 : 720); }
+        } else { phone.style.height = ""; main.style.gridTemplateColumns = ""; NK.fit(scene.cv, { clientWidth: wide ? 640 : avail }, W, H, wide ? 640 : 720); }
       }
       layout(); updateHud(); showHome();
       setMsg("It's 4:10 AM and the party is dead. You need people, a place and a sound system before sunrise. Start with Twinkie.");

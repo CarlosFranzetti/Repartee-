@@ -54,8 +54,9 @@ function paintNowhere(c, S) {
 function lightNowhere(S) {
   const good = !!S.f.a1_setGood;
   return {
-    ambient: "#1e1236",
+    ambient: "#34265a",
     lights: [
+      { x: 320, y: 236, r: 280, color: "#9a80e0", steps: 3, power: 0.45 },   // booth glow on the floor: faces read in the dark
       { x: 190, y: 120, r: 210, color: "#ff3fa4", steps: 4, sy: 1.2, power: good ? 0.9 : 0.6, rim: true },
       { x: 450, y: 120, r: 210, color: "#39d0ff", steps: 4, sy: 1.2, power: good ? 0.9 : 0.6, rim: true },
       { x: 320, y: 60, r: 170, color: "#a05cff", steps: 3, power: 0.6 },

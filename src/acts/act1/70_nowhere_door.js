@@ -76,9 +76,10 @@ function paintDoor(c, S) {
 
 function lightDoor(S) {
   return {
-    ambient: "#2e2450",
+    ambient: "#40366a",
     lights: [
       { x: 356, y: 56, r: 190, color: "#ff3fa4", steps: 4, sy: 1.1, rim: true },
+      { x: 110, y: 210, r: 170, color: "#8a7ac8", steps: 3, power: 0.5 },   // spill from the street, so the line reads
       { x: 356, y: 64, r: 150, color: "#ff2a2a", steps: 3, power: 0.7 },
       { x: 150, y: 40, r: 190, color: "#6a5ab8", steps: 3, power: 0.5 },
       { x: 560, y: 50, r: 170, color: "#39d0ff", steps: 3, power: 0.5, rim: true },

@@ -319,7 +319,9 @@ async function run(host, p, SK) {
     const mAng = SK.meter(hud, { label: "ANGRY", color: "#ff3fa4", max: 10, value: 0 }); mAng.set(0, "0/10");
     // clipboard
     const clip = el("div", { cls: "gl-clip" }, side);
-    el("h3", { text: "CLIPBOARD — " + venue.toUpperCase() }, clip);
+    const clipH = el("h3", { text: "CLIPBOARD \u2014 " + venue.toUpperCase() }, clip);
+    clipH.addEventListener("click", () => clip.classList.toggle("closed"));
+    if ((window.innerHeight || 800) < 460) clip.classList.add("closed");
     const cul = el("ul", {}, clip);
     el("li", { html: "Capacity <b>" + cap + "</b>. List: <b>" + list.length + "</b> names." }, cul);
     el("li", { html: "VIPs: <b>" + G.vipNames.slice(0, Math.max(1, G.vipCount)).join(", ") + "</b>. Gold band. No ID needed." }, cul);

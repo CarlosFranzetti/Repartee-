@@ -1067,7 +1067,7 @@ function save() {
   store.set(SAVE_KEY, S);
 }
 RP.save = save;
-RP.hasSave = () => !!store.get(SAVE_KEY);
+RP.hasSave = () => { const d = store.get(SAVE_KEY); return !!(d && ROOMS[d.room]); };   // a save from a level this build lacks does not count
 RP.loadSave = async function () {
   const d = store.get(SAVE_KEY);
   if (!d || !ROOMS[d.room]) return false;

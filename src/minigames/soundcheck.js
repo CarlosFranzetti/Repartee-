@@ -130,7 +130,7 @@ const CSS = `
 .sc-main.compact .sc-right { gap: 4px; } .sc-main.compact .sc-test { padding: 4px; gap: 4px; } .sc-main.compact .sc-test .kbtn { padding: 3px 2px; font-size: 16px; }
 .sc-main.compact .sc-tabs { gap: 3px; } .sc-main.compact .sc-tab { padding: 2px 1px; font-size: 15px; border-bottom-width: 2px; }
 .sc-main.compact .sc-eq input { height: 52px; } .sc-main.compact .sc-card { padding: 4px 6px; gap: 3px; } .sc-main.compact .sc-card .t { font-size: 17px; } .sc-main.compact .sc-strip { padding: 4px; gap: 3px; }
-.sc-main.compact .sc-info { gap: 2px; } .sc-main.compact .sc-clock { font-size: 18px; } .sc-main.compact .sc-acts { gap: 6px; }
+.sc-main.compact .sc-card { flex-direction: row; flex-wrap: wrap; align-items: center; } .sc-main.compact .sc-card .t { flex: 1 1 100%; } .sc-main.compact .sc-info { gap: 2px; } .sc-main.compact .sc-clock { font-size: 18px; } .sc-main.compact .sc-acts { gap: 6px; }
 @media (max-width: 860px) { .sc-clock { font-size: 20px; } .sc-panel { min-height: 0; } .sc-info .mg-msg { font-size: 20px; } .sc-acts .btn { padding: 6px 12px; } }
 @media (max-width: 420px) { .sc-test .kbtn { font-size: 16px; } .sc-tab { font-size: 16px; } .sc-eq input { height: 74px; } }
 @media (prefers-reduced-motion: reduce) { .sc-scene { cursor: pointer; } }
@@ -1064,10 +1064,10 @@ RP.mg.register("soundCheck", {
         let sc;
         if (compact) {
           const w = Math.max(280, Math.min(avail * 0.5, (window.innerHeight - 170) * 1.6));
-          sc = w / W; scene.cv.style.width = Math.round(w) + "px"; scene.cv.style.height = Math.round(H * sc) + "px";
+          sc = w / W; main.style.gridTemplateColumns = Math.round(w) + "px minmax(0, 1fr)"; scene.cv.style.width = Math.round(w) + "px"; scene.cv.style.height = Math.round(H * sc) + "px";
           panel.style.maxHeight = Math.max(120, window.innerHeight - 24 - (test.offsetHeight || 64) - (tabsEl.offsetHeight || 52) - 36) + "px";
         } else {
-          panel.style.maxHeight = "";
+          panel.style.maxHeight = ""; main.style.gridTemplateColumns = "";
           const boxW = wide ? 640 : avail;
           sc = NK.fit(scene.cv, { clientWidth: boxW }, W, H, wide ? 640 : 820);
         }

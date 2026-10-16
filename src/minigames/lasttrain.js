@@ -56,8 +56,8 @@ const CSS = `
 .lt-alerts div { border-left: 3px solid var(--pink); padding-left: 6px; }
 .lt-gear { display: flex; align-items: center; gap: 6px; font-size: 18px; color: var(--fg); }
 .lt-main.compact { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "hud panel" "map panel" "info panel" "acts panel"; grid-template-rows: auto auto auto 1fr; gap: 4px 8px; }
-.lt-main.compact .lt-mapbox { margin: 0; } .lt-main.compact .lt-hud { gap: 4px; flex-wrap: nowrap; } .lt-main.compact .lt-chip { padding: 1px 5px; font-size: 16px; gap: 3px; white-space: nowrap; } .lt-main.compact .lt-chip small { font-size: 12px; } .lt-main.compact .lt-bar { width: 24px; height: 8px; }
-.lt-main.compact .lt-info { font-size: 16px; min-height: 0; line-height: 1.02; } .lt-main.compact .lt-panel { overflow-y: auto; gap: 4px; padding-right: 2px; } .lt-main.compact .lt-card { padding: 5px 7px; gap: 4px; } .lt-main.compact .lt-card h3 { font-size: 17px; } .lt-main.compact .lt-card p { font-size: 16px; } .lt-main.compact .lt-opt { padding: 3px 7px; font-size: 18px; } .lt-main.compact .lt-opt.mv { flex-direction: row; align-items: center; justify-content: space-between; } .lt-main.compact .lt-row2 { grid-template-columns: 1fr 1fr; gap: 4px; } .lt-main.compact .lt-ann { font-size: 17px; padding: 4px 8px; } .lt-main.compact .lt-log { display: none; } .lt-main.compact .lt-phonecard { flex-direction: row; flex-wrap: wrap; align-items: center; } .lt-main.compact .lt-phonecard .lt-opt { width: auto; flex: 1 1 130px; } .lt-main.compact .lt-phonecard p, .lt-main.compact .lt-phonecard .lt-alerts { flex: 1 1 100%; } .lt-main.compact .lt-phonecard h3 { flex: 1 1 100%; } .lt-main.compact .lt-lab { }
+.lt-main.compact .lt-mapbox { margin: 0; } .lt-main.compact .lt-hud { gap: 3px; flex-wrap: wrap; } .lt-main.compact .lt-chip { padding: 1px 5px; font-size: 16px; gap: 3px; white-space: nowrap; } .lt-main.compact .lt-chip small { font-size: 12px; } .lt-main.compact .lt-chip.due small:last-child { display: none; } .lt-main.compact .lt-bar { width: 24px; height: 8px; }
+.lt-main.compact .lt-info { font-size: 16px; min-height: 0; line-height: 1.02; } .lt-main.compact .lt-panel { overflow-y: auto; gap: 4px; padding-right: 2px; } .lt-main.compact .lt-card { padding: 5px 7px; gap: 4px; } .lt-main.compact .lt-card h3 { font-size: 17px; } .lt-main.compact .lt-card p { display: none; } .lt-main.compact .lt-phonecard p { display: block; font-size: 15px; } .lt-main.compact .lt-opt .c { font-size: 13px; } .lt-main.compact .lt-opt { padding: 3px 7px; font-size: 18px; } .lt-main.compact .lt-opt.mv { padding: 2px 6px; } .lt-main.compact .lt-row2 { grid-template-columns: 1fr 1fr; gap: 4px; } .lt-main.compact .lt-ann { font-size: 17px; padding: 4px 8px; } .lt-main.compact .lt-log { display: none; } .lt-main.compact .lt-phonecard { flex-direction: row; flex-wrap: wrap; align-items: center; } .lt-main.compact .lt-phonecard .lt-opt { width: auto; flex: 1 1 130px; } .lt-main.compact .lt-phonecard p, .lt-main.compact .lt-phonecard .lt-alerts { flex: 1 1 100%; } .lt-main.compact .lt-phonecard h3 { flex: 1 1 100%; } .lt-main.compact .lt-lab { }
 @media (max-width: 860px) { .lt-info { font-size: 18px; } .lt-opt { font-size: 19px; } }
 @media (prefers-reduced-motion: reduce) { .lt-map { } }
 `;
@@ -701,10 +701,10 @@ RP.mg.register("lastTrain", {
         main.classList.toggle("wide", wide); main.classList.toggle("compact", compact);
         let sc;
         if (compact) {
-          const w = Math.max(280, Math.min(avail * 0.52, (window.innerHeight - 118) * (W / H)));
-          sc = w / W; map.cv.style.width = Math.round(w) + "px"; map.cv.style.height = Math.round(H * sc) + "px";
+          const w = Math.max(280, Math.min(avail * 0.52, (window.innerHeight - 150) * (W / H)));
+          sc = w / W; main.style.gridTemplateColumns = Math.round(w) + "px minmax(0, 1fr)"; map.cv.style.width = Math.round(w) + "px"; map.cv.style.height = Math.round(H * sc) + "px";
           panel.style.maxHeight = Math.max(160, window.innerHeight - 52) + "px";
-        } else { panel.style.maxHeight = ""; sc = NK.fit(map.cv, { clientWidth: wide ? 640 : avail }, W, H, wide ? 640 : 760); }
+        } else { panel.style.maxHeight = ""; main.style.gridTemplateColumns = ""; sc = NK.fit(map.cv, { clientWidth: wide ? 640 : avail }, W, H, wide ? 640 : 760); }
         placeLabels(sc);
       }
       layout();

@@ -316,10 +316,11 @@ const CSS = `
   .st-ctl.sticky { position: static; padding: 3px 6px; gap: 4px; } .st-ctl .btn { padding: 3px 8px; font-size: 17px; } .st-ctl .btn small { display: none; }
   .st-msg { font-size: 16px; min-height: 0; line-height: 1.05; max-height: 2.2em; overflow: hidden; } .st-say { display: none; }
   .st-crate { max-height: calc(100vh - 150px); overflow-y: auto; gap: 3px; padding-right: 2px; }
-  .st-evbox { position: absolute; margin: 0; max-height: 100%; overflow: auto; }
+  .st-left { position: relative; }
+  .st-evbox { position: absolute; margin: 0; max-height: 100%; overflow: auto; background: rgba(8, 5, 18, .88); }
   .st-evbox .ch { flex-direction: row; } .st-evbox .ch .btn { flex: 1 1 30%; min-width: 120px; }
   .st-ev .tx { font-size: 16px; } .st-ev .who { font-size: 14px; } .st-ev canvas { width: 40px; height: 40px; } .st-ev { grid-template-columns: 40px minmax(0, 1fr); padding: 5px; }
-  .st-briefbox { position: absolute; margin: 0; } .st-brief { padding: 6px 10px; gap: 3px; } .st-brief p, .st-brief ul { font-size: 15px; } .st-brief h3 { font-size: 13px; } .st-brief .goal { font-size: 16px; }
+  .st-briefbox { position: absolute; margin: 0; z-index: 6; } .st-brief { padding: 6px 10px; gap: 3px; } .st-brief p, .st-brief ul { font-size: 15px; } .st-brief h3 { font-size: 13px; } .st-brief .goal { font-size: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { .st-ctl .btn.ready { box-shadow: 0 0 0 2px var(--ok); } }
 `;
@@ -365,7 +366,7 @@ RP.mg.register("setTime", {
       const sceneBox = el("div", { cls: "st-sceneBox" }, left);
       const W = 320, H = 144;
       const cv = el("canvas", { cls: "sk-cv px", width: W, height: H, role: "img", "aria-label": "The club from the dance floor" }, sceneBox), sc = cv.getContext("2d");
-      kit.fit(host, cv, W, H, sceneBox, 0, 222);
+      kit.fit(host, cv, W, H, sceneBox, 0, 192);
       // transport
       const tr = el("div", { cls: "mg-panel st-tr" }, left);
       const now = el("div", { cls: "st-now" }, tr);
@@ -443,7 +444,10 @@ RP.mg.register("setTime", {
       }
 
       /* ---------- briefing ---------- */
+      function placeBrief() { const par = window.innerHeight <= 460 ? left : sceneBox; if (briefBox.parentNode !== par) par.appendChild(briefBox); }
+      window.addEventListener("resize", placeBrief); host.cleanup(() => window.removeEventListener("resize", placeBrief));
       function showBrief() {
+        placeBrief();
         const B = R.D.brief, rep = s => s.replace(/\{L\}/g, R.legendShort);
         briefBox.hidden = false; briefBox.innerHTML = "";
         const bx = el("div", { cls: "st-brief" }, briefBox);

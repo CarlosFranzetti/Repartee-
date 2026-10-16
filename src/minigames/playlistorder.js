@@ -144,7 +144,7 @@ function solve(R) {
    UI
    ====================================================================== */
 const CSS = `
-.pl-board { width: 100%; max-width: 920px; margin-inline: auto; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pl-board { width: 100%; max-width: 820px; margin-inline: auto; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .pl-mid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: stretch; }
 .pl-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
 .pl-top .arc { font-family: var(--logo); font-size: clamp(13px, 3.2vw, 17px); color: var(--pink); }
@@ -165,7 +165,7 @@ const CSS = `
 .pl-slot:hover { border-color: var(--pink); }
 .pl-slot:focus-visible, .sk-card:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
 .pl-slot.drag, .sk-card.drag { opacity: .35; }
-.pl-info { font-size: 19px; line-height: 1.1; min-height: 4.6em; display: flex; flex-direction: column; gap: 3px; }
+.pl-info { font-size: 19px; line-height: 1.1; min-height: 3.4em; display: flex; flex-direction: column; gap: 3px; }
 .pl-info .fact { color: var(--cyan); font-size: 16px; } .pl-info .why { color: #ff8a8a; font-size: 17px; } .pl-info .why.good { color: var(--ok); }
 .pl-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 5px; padding: 6px; border: 1px dashed transparent; border-radius: 3px; }
 .pl-grade { display: flex; flex-direction: column; gap: 4px; justify-content: center; min-width: 150px; }
@@ -178,6 +178,22 @@ const CSS = `
   .pl-slot { min-height: 70px; padding: 3px; } .pl-slot .t { display: none; } .pl-slot .m .pips { display: none; }
   .pl-pool { grid-template-columns: minmax(0, 1fr); }
   .pl-mid { grid-template-columns: minmax(0, 1fr); } .pl-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; } .pl-grade .big { grid-column: 1 / -1; } .pl-grade .mini { grid-template-columns: 52px minmax(0, 1fr); }
+}
+
+@media (max-height: 460px) {
+  .overlay.mg-playlistOrder { padding: 4px 8px; }
+  .mg-playlistOrder .mg-wrap { gap: 4px; }
+  .mg-playlistOrder .mg-head { flex-wrap: nowrap; align-items: baseline; }
+  .mg-playlistOrder .mg-logo { font-size: 13px; } .mg-playlistOrder .mg-sub { font-size: 15px; }
+  .pl-board { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(230px, 36%); grid-template-rows: auto auto auto auto auto 1fr; grid-template-areas: "top pool" "graph pool" "slots pool" "mid pool" "acts pool" "msg pool"; gap: 4px 8px; align-content: start; }
+  .pl-top { grid-area: top; gap: 0 10px; flex-wrap: nowrap; } .pl-top .arc { font-size: 12px; white-space: nowrap; } .pl-top .bl { font-size: 14px; line-height: 1; min-width: 0; max-height: 2em; overflow: hidden; }
+  .pl-graph { grid-area: graph; } .pl-legend { display: none; }
+  .pl-slots { grid-area: slots; } .pl-slot { min-height: 52px; padding: 2px; } .pl-slot .t, .pl-slot .m .pips { display: none; } .pl-slot canvas { max-width: 28px; } .pl-slot .n { font-size: 9px; }
+  .pl-mid { grid-area: mid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; } .pl-info { min-height: 0; max-height: 38px; overflow: hidden; font-size: 14px; padding: 3px 6px; } .pl-info .mg-sub, .pl-info .fact { display: none; }
+  .pl-grade { flex-direction: row; align-items: center; gap: 8px; padding: 2px 8px; min-width: 0; display: flex; } .pl-grade .big { font-size: 22px; white-space: nowrap; } .pl-grade .big small { font-size: 11px !important; } .pl-grade .mini { grid-template-columns: auto 44px; font-size: 12px; gap: 3px; } .pl-grade .sk-meter { height: 8px; }
+  .pl-act { grid-area: acts; } .pl-act .btn { padding: 3px 10px; font-size: 18px; }
+  .pl-msg { grid-area: msg; font-size: 15px; line-height: 1.05; min-height: 0; max-height: 3.2em; overflow: hidden; }
+  .pl-pool { grid-area: pool; grid-template-columns: minmax(0, 1fr); max-height: calc(100vh - 44px); overflow-y: auto; padding: 0 2px 0 0; gap: 3px; border: 0; }
 }
 `;
 let cssDone = false;
@@ -227,7 +243,7 @@ RP.mg.register("playlistOrder", {
       const info = el("div", { cls: "mg-panel pl-info", "aria-live": "polite" }, mid);
       const grade = el("div", { cls: "mg-panel pl-grade" }, mid);
       const poolEl = el("div", { cls: "pl-pool", role: "listbox", "aria-label": "Records not yet placed" }, board);
-      const msg = el("div", { cls: "mg-msg", "aria-live": "polite" }, board);
+      const msg = el("div", { cls: "mg-msg pl-msg", "aria-live": "polite" }, board);
       const acts = el("div", { cls: "pl-act" }, board);
       const lockBtn = el("button", { cls: "btn primary", type: "button", text: "LOCK IT IN ▶", disabled: "disabled" }, acts);
       const clearBtn = el("button", { cls: "btn", type: "button", text: "CLEAR" }, acts);

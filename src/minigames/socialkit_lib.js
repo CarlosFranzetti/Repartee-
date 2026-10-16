@@ -112,10 +112,11 @@ const CSS = `
   .sk-g .mg-logo { font-size: 15px; } .sk-g .mg-sub { font-size: 16px; }
   .sk-g .sk-wrap { gap: 6px; }
   .sk-g .sk-say { min-height: 50px; padding: 4px 10px 6px; } .sk-g .sk-say .nm { font-size: 10px; margin-bottom: 2px; } .sk-g .sk-say .tx { font-size: 21px; }
-  .sk-g .sk-choices { gap: 3px; } .sk-g .sk-choice { min-height: 30px; padding: 2px 8px; font-size: 19px; } .sk-g .sk-choice .tag { font-size: 12px; margin-right: 5px; }
+  .sk-g .sk-choices { gap: 3px; } .sk-g .sk-choice { min-height: 28px; padding: 2px 8px; font-size: 18px; } .sk-g .sk-choice .tag { font-size: 12px; margin-right: 5px; }
   .sk-g .sk-meter .lab { font-size: 15px; } .sk-g .sk-meter .bar { height: 12px; } .sk-g .sk-meter.pips .bar { height: 16px; }
   .sk-g .sk-note { padding: 4px 8px; font-size: 17px; } .sk-g .sk-note h3 { font-size: 15px; margin-bottom: 2px; }
   .sk-g .sk-intro, .sk-g .sk-end { padding: 8px 12px; gap: 5px; } .sk-g .sk-intro ol { font-size: 18px; gap: 2px; } .sk-g .sk-intro h2, .sk-g .sk-end h2 { font-size: 15px; }
+  .sk-g .sk-intro .sk-note ul { display: block; columns: 2; column-gap: 18px; } .sk-g .sk-intro .sk-note li { break-inside: avoid; } .sk-g .sk-intro .kick { font-size: 15px; } .sk-g .sk-intro .mg-msg { font-size: 19px; }
   .sk-g .sk-end .score { font-size: 24px; } .sk-g .sk-end .stat b { font-size: 21px; } .sk-g .sk-end canvas { width: 128px !important; height: 48px !important; } .sk-g .sk-end .sub { font-size: 19px; }
   .sk-g .sk-tip { display: none; }
 }

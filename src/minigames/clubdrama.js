@@ -496,9 +496,9 @@ async function run(host, p, SK) {
     const roundEl = el("div", { cls: "cd-round", text: "BEAT 1/3" }, hud);
     const mVibe = SK.meter(hud, { label: "VIBE", color: "#39d0ff", max: 100, value: 50 });
     const stageApi = SK.canvas(cw, 320, 188, 2);
-    const say = SK.say(S, wrap);
-    const chBox = el("div", {}, wrap);
-    el("div", { cls: "sk-tip", text: "Keys 1-4 pick a response · click or Space skips the typing" }, wrap);
+    const say = SK.say(S, play);
+    const chBox = el("div", { cls: "cd-choices" }, play);
+    el("div", { cls: "sk-tip", text: "Keys 1-4 pick a response · click or Space skips the typing" }, play);
     const c = stageApi.c;
     const scene = paintScene(sc.scene, SK, hashStr(scnKey) % 9999);
     const floats = SK.floats();
